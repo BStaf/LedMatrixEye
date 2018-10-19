@@ -7,14 +7,15 @@
 //  Notes   : Code for using a 74HC595 Shift Register           //
 //          : to count from 0 to 255                           
 //****************************************************************
-
+#include "Animation.h"
+#include "AnimationSetup.h"
 //Pin connected to ST_CP of 74HC595
 int latchPin = 3;
 //Pin connected to SH_CP of 74HC595
 int clockPin = 2;
 ////Pin connected to DS of 74HC595
 int dataPin = 4;
-
+/*
 byte LedMatrix[8] = {   B00111100, 
                         B01000010,
                         B10000001,
@@ -23,7 +24,8 @@ byte LedMatrix[8] = {   B00111100,
                         B10000001,
                         B01000010,
                         B00111100 };
-                        
+*/
+Animation *an;                        
 void setup() {
   //set pins to output so you can control the shift register
   pinMode(latchPin, OUTPUT);
@@ -32,10 +34,14 @@ void setup() {
   for (int i=5; i<=12;i++){
     pinMode(i, OUTPUT);
   }
+  an = new Animation(openEyeMatrixCnt, openEyeMatrix, 0, 100);
 }
 
 void loop() {
-    draw(LedMatrix);  
+  if (an->Complete)
+    an->Reset();
+  an->Update();
+  draw(an->CurrentViewMatrix);  
 }
 
 
@@ -46,7 +52,7 @@ void draw(byte* picAr){
     digitalWrite(latchPin, LOW);
     delay(1);
     setCommonPin(i);
-    shiftOut(dataPin, clockPin, LSBFIRST, LedMatrix[i]);  
+    shiftOut(dataPin, clockPin, LSBFIRST, picAr[i]);  
     digitalWrite(latchPin, HIGH);
     delay(1);
   }
