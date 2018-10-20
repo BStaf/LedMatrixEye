@@ -3,7 +3,7 @@
 
 typedef unsigned char byte;
 
-//#include "Arduino.h"
+#include "Arduino.h"
 
 class Animation
 {
@@ -14,7 +14,7 @@ class Animation
     byte * _viewMatrix;
     byte * _maskMatrix;
     unsigned long _lastTime;
-    unsigned long millis();
+//    unsigned long millis();
     
     void runUpdateAnimation();
     
@@ -22,7 +22,7 @@ class Animation
     bool Complete;
     unsigned long CurMS;
     byte * CurrentViewMatrix;
-    Animation(int animationSteps, byte * viewMatrix, byte * maskMatrix, long speed);
+    Animation(byte * viewMatrix, byte * maskMatrix, long speed);
     void Update();
     void Reset();
 };

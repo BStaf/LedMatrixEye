@@ -1,16 +1,15 @@
-//#include "Arduino.h"
-#include <chrono>
-//#include "Timer.h"
+#include "Arduino.h"
 
 #include "Animation.h"
 
-Animation::Animation(int animationSteps, byte * viewMatrix, byte * maskMatrix, long speed)
+Animation::Animation(byte * viewMatrix, byte * maskMatrix, long speed)
 {
-  _animationSteps = animationSteps;
+  _animationSteps = viewMatrix[0];
   _viewMatrix = viewMatrix;
   _maskMatrix = maskMatrix;
   _speed = speed;
-
+  _lastTime = 0;
+  CurrentViewMatrix = _viewMatrix+1;
   Reset();
 }
 
@@ -24,23 +23,19 @@ void Animation::Update(){
 }
 void Animation::Reset(){
   _currentStep = 0;
-  _lastTime = 0;
   Complete = false;
-  CurrentViewMatrix = _viewMatrix; 
+  CurrentViewMatrix = _viewMatrix+1; 
 }
 void Animation::runUpdateAnimation(){
   if (Complete)
     return;
-  
-  CurrentViewMatrix = _viewMatrix + (_currentStep * sizeof(byte)*8);
-  if (++_currentStep > _animationSteps)
+  if (_currentStep >= _animationSteps)
     Complete = true;
+  CurrentViewMatrix = _viewMatrix + (_currentStep * sizeof(byte)*8)+1;
+  _currentStep++;
+  
 }
-/*using namespace std::chrono;
-unsigned long  Animation::millis(){
-	milliseconds ms = duration_cast< milliseconds >(system_clock::now().time_since_epoch());
-	return ms.count();
-}*/
-unsigned long Animation::millis(){
+
+/*unsigned long Animation::millis(){
 	return CurMS;
-}
+}*/

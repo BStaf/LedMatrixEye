@@ -15,6 +15,8 @@ int latchPin = 3;
 int clockPin = 2;
 ////Pin connected to DS of 74HC595
 int dataPin = 4;
+
+int state = 0;
 /*
 byte LedMatrix[8] = {   B00111100, 
                         B01000010,
@@ -25,7 +27,12 @@ byte LedMatrix[8] = {   B00111100,
                         B01000010,
                         B00111100 };
 */
-Animation *an;                        
+Animation *an;
+Animation *anWakeUp;
+Animation *anLookLR;
+Animation *anRoll;
+Animation *anBlinkX;
+                        
 void setup() {
   //set pins to output so you can control the shift register
   pinMode(latchPin, OUTPUT);
@@ -34,14 +41,48 @@ void setup() {
   for (int i=5; i<=12;i++){
     pinMode(i, OUTPUT);
   }
-  an = new Animation(openEyeMatrixCnt, openEyeMatrix, 0, 100);
+  anWakeUp = new Animation(OpenEyeMatrix, 0, 150);
+  anLookLR = new Animation(LREyeMatrix, 0, 150);
+  anRoll = new Animation(RollEyeMatrix, 0 , 80);
+  anBlinkX = new Animation(BlinkXMatrix, 0, 200);
+  an = anWakeUp;
+  an->Update();
 }
 
 void loop() {
-  if (an->Complete)
+  if (an->Complete){
+    state++;
+    switch(state){
+      case 1:
+        an = anLookLR;
+        break;
+      case 2:
+        an = anRoll;
+        break;
+      case 3:
+        an = anLookLR;
+        break;
+      case 4:
+        an = anBlinkX;
+        break;
+      case 5:
+        an = anBlinkX;
+        break;
+      case 6:
+        an = anBlinkX;
+        break;
+      case 7:
+        an = anBlinkX;
+        break;
+      default:
+        state=0;
+        an = anWakeUp;
+        break;
+    }
     an->Reset();
-  an->Update();
+  }
   draw(an->CurrentViewMatrix);  
+  an->Update();
 }
 
 
