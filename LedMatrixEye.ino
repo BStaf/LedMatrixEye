@@ -1,14 +1,14 @@
 //**************************************************************//
-//  Name    : shiftOutCode, Hello World                                
-//  Author  : Carlyn Maw,Tom Igoe, David A. Mellis 
-//  Date    : 25 Oct, 2006    
-//  Modified: 23 Mar 2010                                 
-//  Version : 2.0                                             
-//  Notes   : Code for using a 74HC595 Shift Register           //
-//          : to count from 0 to 255                           
+//  Name    : LedMatrixEye                              
+//  Author  : Bill S.                                          
+//  Notes   : Drives one LedMtrix based on ultrasonic sensor    
+//          : Will show eye animations based on distance                       
 //****************************************************************
 #include "Animation.h"
 #include "AnimationSetup.h"
+#include "LedMatrix8x8ShiftRegisters.h"
+#include "UltraSonic3Wire.h"
+#include "EyeState.h"
 //Pin connected to ST_CP of 74HC595
 int latchPin = 3;
 //Pin connected to SH_CP of 74HC595
@@ -16,118 +16,63 @@ int clockPin = 2;
 ////Pin connected to DS of 74HC595
 int dataPin = 4;
 
-int ping = 13;
+int pingPin = 13;
 
 int state;
-
+LedMatrix8x8ShiftRegisters *ledMatrix;
 Animation *an;
 Animation *anWakeUp;
 Animation *anLookLR;
 Animation *anRoll;
 Animation *anBlinkX;
 Animation *anSleep;
+Animation *anGoToSleep;
                         
 void setup() {
-  //set pins to output so you can control the shift register
-  pinMode(latchPin, OUTPUT);
-  pinMode(clockPin, OUTPUT);
-  pinMode(dataPin, OUTPUT);
-  for (int i=5; i<=12;i++){
-    pinMode(i, OUTPUT);
-  }
+  ledMatrix = new LedMatrix8x8ShiftRegisters(latchPin, clockPin, dataPin);
+
   anWakeUp = new Animation(OpenEyeMatrix, 0, 160);
   anLookLR = new Animation(LREyeMatrix, 0, 150);
   anRoll = new Animation(RollEyeMatrix, 0 , 80);
   anBlinkX = new Animation(BlinkXMatrix, 0, 200);
   anSleep = new Animation(SleepMatrix, 0, 100);
+  anGoToSleep = new Animation(CloseEyeMatrix, 0, 160);
   an = anWakeUp;
   an->Update();
   state = 0;
 }
 
 void loop() {
-  
-  if ((an->Complete)&&(state > 0)){
-    state++;
-  }
-  if ((getInches(ping) < 5)&&(state == 0)){
-    state = 1;
-  }
-  switch(state){
-    case 0:
-      an = anSleep;
-      break;
-    case 1: 
-      an = anWakeUp;
-      break;
-    case 2:
-      an = anLookLR;
-      break;
-    case 3:
-      an = anRoll;
-      break;
-    case 4:
-      an = anLookLR;
-      break;
-    case 5:
-      an = anBlinkX;
-      break;
-    case 6:
-      an = anBlinkX;
-      break;
-    case 7:
-      an = anBlinkX;
-      break;
-    case 8:
-      an = anBlinkX;
-      break;
-    default:
-      state=0;
-        //an = anWakeUp;
-        break;
-  }
+  state = getEyeState(pingPin, state, an);
+
   if (an->Complete)
     an->Reset();
-  //if (state > 0)
-    //state++;
-  //an->Reset();
+
+  an = getAnimationForState(state);
   
-  draw(an->CurrentViewMatrix);  
+  ledMatrix->Draw(an->CurrentViewMatrix);  
   an->Update();
+  delay(1);
 }
 
-
-void draw(byte* picAr){
-  byte commonTrigger = 0;
-  for (int i = 0; i < 8; i++) {
-    commonTrigger = ~(1 << i);  
-    digitalWrite(latchPin, LOW);
-    delay(1);
-    //setCommonPin(i);
-     
-    shiftOut(dataPin, clockPin, MSBFIRST, commonTrigger);  
-    shiftOut(dataPin, clockPin, LSBFIRST, picAr[i]);
-    digitalWrite(latchPin, HIGH);
-    delay(1);
+Animation * getAnimationForState(int state){
+  switch(state){
+    case SLEEP:
+      return anSleep;
+    case GO_TO_SLEEP:
+      return anGoToSleep;
+    case WAKE_UP: 
+      return anWakeUp;
+    case LOOK_AROUND:
+      return anLookLR;
+    case LOOK_WACKY:
+      return anRoll;
+    case GET_NERVOUS:
+      return anRoll;
+    case FREAK_OUT:
+      return anBlinkX;
   }
+  //this shouldn't happen
+  return anSleep;
 }
-void setCommonPin(int row){
-  for (int i=0;i<8;i++){
-    if (i == row)
-      digitalWrite(i+5,LOW);
-    else
-      digitalWrite(i+5,HIGH);
-  } 
-}
-long getInches(int pingPin){
-  pinMode(pingPin, OUTPUT);
-  digitalWrite(pingPin, LOW);
-  delayMicroseconds(2);
-  digitalWrite(pingPin, HIGH);
-  delayMicroseconds(5);
-  digitalWrite(pingPin, LOW);
 
-  pinMode(pingPin, INPUT);
-  // convert the time into a distance
-  return pulseIn(pingPin, HIGH)  / 74 / 2;
-}
