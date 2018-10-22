@@ -27,6 +27,7 @@ Animation *anRoll;
 Animation *anBlinkX;
 Animation *anSleep;
 Animation *anGoToSleep;
+Animation *anWacky;
                         
 void setup() {
   ledMatrix = new LedMatrix8x8ShiftRegisters(latchPin, clockPin, dataPin);
@@ -37,6 +38,7 @@ void setup() {
   anBlinkX = new Animation(BlinkXMatrix, 0, 200);
   anSleep = new Animation(SleepMatrix, 0, 100);
   anGoToSleep = new Animation(CloseEyeMatrix, 0, 160);
+  anWacky = new Animation(CrazyEyeMatrix,0,80);
   an = anWakeUp;
   an->Update();
   state = 0;
@@ -66,7 +68,7 @@ Animation * getAnimationForState(int state){
     case LOOK_AROUND:
       return anLookLR;
     case LOOK_WACKY:
-      return anRoll;
+      return anWacky;
     case GET_NERVOUS:
       return anRoll;
     case FREAK_OUT:
