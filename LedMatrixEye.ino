@@ -16,22 +16,16 @@ int clockPin = 2;
 ////Pin connected to DS of 74HC595
 int dataPin = 4;
 
-int state = 0;
-/*
-byte LedMatrix[8] = {   B00111100, 
-                        B01000010,
-                        B10000001,
-                        B10011001,
-                        B10011001,
-                        B10000001,
-                        B01000010,
-                        B00111100 };
-*/
+int ping = 13;
+
+int state;
+
 Animation *an;
 Animation *anWakeUp;
 Animation *anLookLR;
 Animation *anRoll;
 Animation *anBlinkX;
+Animation *anSleep;
                         
 void setup() {
   //set pins to output so you can control the shift register
@@ -41,46 +35,63 @@ void setup() {
   for (int i=5; i<=12;i++){
     pinMode(i, OUTPUT);
   }
-  anWakeUp = new Animation(OpenEyeMatrix, 0, 150);
+  anWakeUp = new Animation(OpenEyeMatrix, 0, 160);
   anLookLR = new Animation(LREyeMatrix, 0, 150);
   anRoll = new Animation(RollEyeMatrix, 0 , 80);
   anBlinkX = new Animation(BlinkXMatrix, 0, 200);
+  anSleep = new Animation(SleepMatrix, 0, 100);
   an = anWakeUp;
   an->Update();
+  state = 0;
 }
 
 void loop() {
-  if (an->Complete){
+  
+  if ((an->Complete)&&(state > 0)){
     state++;
-    switch(state){
-      case 1:
-        an = anLookLR;
-        break;
-      case 2:
-        an = anRoll;
-        break;
-      case 3:
-        an = anLookLR;
-        break;
-      case 4:
-        an = anBlinkX;
-        break;
-      case 5:
-        an = anBlinkX;
-        break;
-      case 6:
-        an = anBlinkX;
-        break;
-      case 7:
-        an = anBlinkX;
-        break;
-      default:
-        state=0;
-        an = anWakeUp;
-        break;
-    }
-    an->Reset();
   }
+  if ((getInches(ping) < 5)&&(state == 0)){
+    state = 1;
+  }
+  switch(state){
+    case 0:
+      an = anSleep;
+      break;
+    case 1: 
+      an = anWakeUp;
+      break;
+    case 2:
+      an = anLookLR;
+      break;
+    case 3:
+      an = anRoll;
+      break;
+    case 4:
+      an = anLookLR;
+      break;
+    case 5:
+      an = anBlinkX;
+      break;
+    case 6:
+      an = anBlinkX;
+      break;
+    case 7:
+      an = anBlinkX;
+      break;
+    case 8:
+      an = anBlinkX;
+      break;
+    default:
+      state=0;
+        //an = anWakeUp;
+        break;
+  }
+  if (an->Complete)
+    an->Reset();
+  //if (state > 0)
+    //state++;
+  //an->Reset();
+  
   draw(an->CurrentViewMatrix);  
   an->Update();
 }
@@ -92,8 +103,10 @@ void draw(byte* picAr){
     commonTrigger = ~(1 << i);  
     digitalWrite(latchPin, LOW);
     delay(1);
-    setCommonPin(i);
-    shiftOut(dataPin, clockPin, LSBFIRST, picAr[i]);  
+    //setCommonPin(i);
+     
+    shiftOut(dataPin, clockPin, MSBFIRST, commonTrigger);  
+    shiftOut(dataPin, clockPin, LSBFIRST, picAr[i]);
     digitalWrite(latchPin, HIGH);
     delay(1);
   }
@@ -106,4 +119,15 @@ void setCommonPin(int row){
       digitalWrite(i+5,HIGH);
   } 
 }
+long getInches(int pingPin){
+  pinMode(pingPin, OUTPUT);
+  digitalWrite(pingPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(pingPin, HIGH);
+  delayMicroseconds(5);
+  digitalWrite(pingPin, LOW);
 
+  pinMode(pingPin, INPUT);
+  // convert the time into a distance
+  return pulseIn(pingPin, HIGH)  / 74 / 2;
+}
