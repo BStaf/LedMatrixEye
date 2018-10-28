@@ -16,7 +16,7 @@ int clockPin = 2;
 ////Pin connected to DS of 74HC595
 int dataPin = 4;
 
-int pingPin = 13;
+int pingPin = 5;
 
 int state;
 LedMatrix8x8ShiftRegisters *ledMatrix;
@@ -42,19 +42,21 @@ void setup() {
   an = anWakeUp;
   an->Update();
   state = 0;
-}
 
+  Serial.begin(9600);
+}
+//int cnt=0;
 void loop() {
   state = getEyeState(pingPin, state, an);
-
+  //state = 4;
   if (an->Complete)
     an->Reset();
-
+  
   an = getAnimationForState(state);
   
   ledMatrix->Draw(an->CurrentViewMatrix);  
   an->Update();
-  delay(1);
+  //no delay here. I have enough other delays
 }
 
 Animation * getAnimationForState(int state){

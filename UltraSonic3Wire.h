@@ -20,10 +20,18 @@ long GetRawDistance(int pingPin){
 long GetInches(int pingPin){
     return GetRawDistance(pingPin)  / 74 / 2;
 }
+long GetDistanceDelayed(int pingPin, int msPerRead){
+    unsigned long curTime = millis();
 
-long GetInchesDebounce(int pingPin, int msPerRead){
-    unsigned long curTime=0;// = millis();
-    usReadAcc += GetInches(pingPin);
+    if ((curTime - lastUSReadTime) > msPerRead){
+        usLastRead = GetRawDistance(pingPin);
+        lastUSReadTime = curTime;
+    }
+    return usLastRead;
+}
+long GetDistanceDebounce(int pingPin, int msPerRead){
+    unsigned long curTime = millis();
+    usReadAcc += GetRawDistance(pingPin);
     usReadCnt++;
     //get average
     if ((curTime - lastUSReadTime) > msPerRead){
